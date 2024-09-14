@@ -26,7 +26,7 @@ const ParticlesComponent = () => {
           left: 0,
           width: "100%",
           height: "100%",
-          zIndex: -1, // Ensure particles are behind content
+          zIndex: -5, // particles are behind content
         }}
       />
     )

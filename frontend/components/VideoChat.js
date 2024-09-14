@@ -19,10 +19,15 @@ export default function VideoChat() {
 
   return (
     <div className="relative">
-      <video ref={videoRef} className="w-full h-64 bg-black rounded-lg"></video>
-      <button className="absolute bottom-4 right-4 bg-red-500 text-white px-4 py-2 rounded-full">
-        End Call
-      </button>
+      {/* video display */}
+      <video ref={videoRef} className="w-full h-84 bg-black rounded-lg"></video>
+
+      {/* end call button below the video */}
+      <div className="flex justify-center mt-4">
+        <button className="bg-red-500 text-white px-4 py-2 rounded-full">
+          End Session
+        </button>
+      </div>
     </div>
   )
 }
