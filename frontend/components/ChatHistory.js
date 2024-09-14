@@ -4,8 +4,7 @@ export default function ChatHistory() {
   const [chatHistory, setChatHistory] = useState([])
 
   useEffect(() => {
-    // In a real app, you'd fetch this from your backend
-    // For now, we'll use mock data
+    // fetch from backend!
     const mockHistory = [
       { id: 1, date: '2024-03-15', summary: 'Discussed headache symptoms' },
       { id: 2, date: '2024-03-10', summary: 'Follow-up on medication side effects' },

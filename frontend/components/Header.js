@@ -2,14 +2,16 @@ import Link from 'next/link'
 
 export default function Header() {
   return (
-    <header className="bg-white shadow-md">
-      <nav className="container mx-auto px-4 py-4 flex justify-between items-center">
-        <Link href="/">
-          <img src="/images/logo.svg" alt="AI Doctor Tool" className="h-8" />
+    <header className="bg-blue-600 text-white p-4">
+      <nav className="container mx-auto flex justify-between items-center">
+        <Link href="/" className="text-2xl font-bold">
+          Healthcare AI
         </Link>
-        <div>
-          <Link href="/dashboard" className="btn btn-primary mr-2">Dashboard</Link>
-          <Link href="/chat" className="btn btn-secondary">Start Chat</Link>
+        <div className="space-x-4">
+          <Link href="/chatbot" className="hover:underline">Chatbot</Link>
+          <Link href="/medical-info" className="hover:underline">Medical Info</Link>
+          <Link href="/symptom-checker" className="hover:underline">Symptom Checker</Link>
+          <Link href="/emergency" className="hover:underline">Emergency</Link>
         </div>
       </nav>
     </header>

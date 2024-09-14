@@ -17,8 +17,7 @@ export default function SetupForm() {
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    // Here you would typically send this data to your backend
-    // For now, we'll just store it in localStorage
+    // send data to backend
     localStorage.setItem('userProfile', JSON.stringify(formData))
     router.push('/dashboard')
   }
