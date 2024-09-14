@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import VideoChat from "../components/videochat";
-import ChatHistory from "../components/chathistory"; 
+import VideoChat from "../components/VideoChat";
+import ChatHistory from "../components/ChatHistory"; 
 
 export default function Chatbot() {
   const [messages, setMessages] = useState([])
