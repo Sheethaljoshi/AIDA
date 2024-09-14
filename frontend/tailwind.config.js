@@ -7,9 +7,12 @@ module.exports = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['Lato'],
+      },
       colors: {
-        primary: '#1D4ED8', // idk
-        secondary: '#EC4899', // idk
+        primary: '#03045E', 
+        secondary: '#0077B6',
         background: "var(--background)",
         foreground: "var(--foreground)",
       },
