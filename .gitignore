@@ -1,2 +1,6 @@
 backend/.env
 .env
+
+*.wav
+*.mp3
+*.m4a

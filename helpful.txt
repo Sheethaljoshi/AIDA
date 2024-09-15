@@ -1,0 +1,5 @@
+mamba env export -n ENV_NAME > ENV_NAME.yaml
+conda env update -n my_env --file ENV.yaml
+
+conda install ipykernel
+conda install ipykernel
