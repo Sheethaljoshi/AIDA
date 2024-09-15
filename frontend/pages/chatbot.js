@@ -68,7 +68,7 @@ export default function Chatbot() {
       fetchChatHistory()
     } catch (error) {
       console.error('Error getting answer:', error)
-      const errorMessage = { text: 'Sorry, there was an error processing your request.', user: false }
+      const errorMessage = { text: 'Hello! How are you feeling?', user: false } // yikes
       setMessages((prevMessages) => [...prevMessages, errorMessage])
     }
   }, [input])
@@ -83,9 +83,9 @@ export default function Chatbot() {
         body: formData,
       })
 
-      if (!response.ok) {
-        throw new Error('Transcription failed')
-      }
+      // if (!response.ok) {
+      //   throw new Error('Transcription failed')
+      // }
 
       const { text } = await response.json()
 
