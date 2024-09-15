@@ -4,6 +4,8 @@ export default function VideoChat({ onAudioData }) {
   const videoRef = useRef(null)
   const [isRecording, setIsRecording] = useState(false)
   const mediaRecorderRef = useRef(null)
+  const wsRef = useRef(null)
+  const canvasRef = useRef(null)
 
   useEffect(() => {
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
@@ -12,6 +14,10 @@ export default function VideoChat({ onAudioData }) {
           let video = videoRef.current
           video.srcObject = stream
           video.play()
+
+          const ws = new WebSocket("ws://localhost:8000/ws")
+          wsRef.current = ws
+
 
           // Set up MediaRecorder
           mediaRecorderRef.current = new MediaRecorder(stream)
@@ -37,6 +43,23 @@ export default function VideoChat({ onAudioData }) {
     setIsRecording(!isRecording)
   }
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (videoRef.current && canvasRef.current && wsRef.current && wsRef.current.readyState == WebSocket.OPEN) {
+        const context = canvasRef.current.getContext('2d')
+        context.drawImage(videoRef.current, 0, 0, canvasRef.current.width, canvasRef.current.height)
+        canvasRef.current.toBlob(blob => {
+          if (blob) {
+            wsRef.current.send(blob);
+          }
+        }, 'video/webm')
+      }
+    }, 1000)
+    
+
+    return () => clearInterval(interval)
+  }, [])
+
   return (
     <div className="relative">
       <video ref={videoRef} className="w-full h-84 bg-black rounded-lg"></video>
@@ -50,6 +73,7 @@ export default function VideoChat({ onAudioData }) {
         <button className="bg-red-500 text-white px-4 py-2 rounded-full">
           End Session
         </button>
+        <canvas ref={canvasRef} className="hidden"/>
       </div>
     </div>
   )
