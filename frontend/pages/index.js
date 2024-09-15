@@ -19,7 +19,7 @@ export default function Home() {
             link="/setup"
           />
           <FeatureCard 
-            title="AI-powered FAQ and Chatbot" 
+            title="Meet AIDA 🩵" 
             description="Chat with AIDA to get instant, AI-driven answers to your medical questions and more."
             link="/chatbot"
           />
