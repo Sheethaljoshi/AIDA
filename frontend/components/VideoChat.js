@@ -5,12 +5,9 @@ export default function VideoChat({ onAudioData }) {
   const videoRef = useRef(null)
   const [isRecording, setIsRecording] = useState(false)
   const mediaRecorderRef = useRef(null)
-<<<<<<< Updated upstream
   const wsRef = useRef(null)
   const canvasRef = useRef(null)
-=======
   const router = useRouter() 
->>>>>>> Stashed changes
 
   useEffect(() => {
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
@@ -20,15 +17,11 @@ export default function VideoChat({ onAudioData }) {
           video.srcObject = stream
           video.play()
 
-<<<<<<< Updated upstream
           const ws = new WebSocket("ws://localhost:8000/ws")
           wsRef.current = ws
 
 
           // Set up MediaRecorder
-=======
-          // set up MediaRecorder
->>>>>>> Stashed changes
           mediaRecorderRef.current = new MediaRecorder(stream)
           
           mediaRecorderRef.current.ondataavailable = (event) => {
@@ -52,7 +45,6 @@ export default function VideoChat({ onAudioData }) {
     setIsRecording(!isRecording)
   }
 
-<<<<<<< Updated upstream
   useEffect(() => {
     const interval = setInterval(() => {
       if (videoRef.current && canvasRef.current && wsRef.current && wsRef.current.readyState == WebSocket.OPEN) {
@@ -69,7 +61,6 @@ export default function VideoChat({ onAudioData }) {
 
     return () => clearInterval(interval)
   }, [])
-=======
   const endSession = () => {
     // stop the recording if still active
     if (isRecording) {
@@ -78,7 +69,6 @@ export default function VideoChat({ onAudioData }) {
     // navigate to the results page
     router.push('/results')
   }
->>>>>>> Stashed changes
 
   return (
     <div className="relative">

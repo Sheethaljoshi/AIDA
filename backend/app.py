@@ -13,6 +13,8 @@ from dotenv import load_dotenv
 from datetime import datetime
 import wav
 from fastapi.middleware.cors import CORSMiddleware
+import requests
+import json 
 
 app = FastAPI()
 scheduler = BackgroundScheduler()
@@ -31,7 +33,7 @@ uri = "mongodb+srv://sh33thal24:7CGH0tmrDIsD9QrE@cluster0.klphh.mongodb.net/?ret
 client = MongoClient(uri, server_api=ServerApi('1'))
 db = client["aida"]
 collection = db["users"]
-transcript = None
+transcript = ""
 recording = True
 
 load_dotenv()
@@ -356,6 +358,7 @@ async def create_conversation(
         raise HTTPException(status_code=404, detail="User not found")
 
     return {"status": "Conversation created successfully"}
+
 @app.get("/start-recording/")
 async def start_recording(background_tasks: BackgroundTasks):
     global recording
@@ -365,15 +368,38 @@ async def start_recording(background_tasks: BackgroundTasks):
     
 def poll_transcript():
     global recording
+    global transcript
     recording = True
     while recording:
-        global transcript
-        last_ten = wav.record_audio_and_get_transcript()
-        if last_ten:
-            transcript += last_ten
-        else:
-            break
-        # print(recording)
+        while recording:
+            last_ten = wav.record_audio_and_get_transcript()
+            if last_ten is not None:
+                transcript += last_ten
+            else:
+                break
+        
+        # get answer
+        
+        # ##########
+        print(transcript)
+        
+        transcript = ""
+        print("polling for non-silence")
+        while recording:
+            last_ten = wav.record_audio_and_get_transcript()
+            if last_ten is not None:
+                transcript += last_ten
+                break
+        print("returning to ")
+    print("done")
+    
+    
+    
+@app.get("/test/")
+async def test():
+    res = requests.get('http://localhost:3000/test/')
+    print(res.text)
+    
 
 @app.get("/stop-recording/")
 async def stop_recording():
@@ -383,7 +409,7 @@ async def stop_recording():
 
 @app.get("/")
 def root():
-    return transcript
+    return {"message" : transcript}
 
 if __name__ == "__main__":
     import uvicorn
