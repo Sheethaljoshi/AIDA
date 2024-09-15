@@ -1,31 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
-const medicalData = {
-  firstName: "John",
-  lastName: "Joe",
-  age: 44,
-  height: 181,
-  weight: 154,
-  sex: "Male",
-  medicalHistory: [
-    { disease: "Arthritis", severity: 4, probability: 70 },
-    { disease: "Asthma", severity: 2, probability: 50 },
-    { disease: "Psoriasis", severity: 2, probability: 40 }
-  ],
-  latestVisit: {
-    date: "09/14/24",
-    title: "Schizophrenia-Induced Hallucinations",
-    symptoms: ["Vomiting", "Headache", "Fatigue"]
-  }
-};
-
 export default function Results() {
+  const [userData, setUserData] = useState(null);
   const [sentimentData, setSentimentData] = useState([]);
 
   useEffect(() => {
     getEmotionsAvgs()
-    // simulated sentiment data for the graph
+    // Retrieve the user profile from localStorage
+    const storedUserData = localStorage.getItem('userProfile');
+    if (storedUserData) {
+      setUserData(JSON.parse(storedUserData));
+    }
+
+    // Simulate sentiment data for the graph
     // setSentimentData([
     //   { name: 'Positive', frequency: 25 },
     //   { name: 'Negative', frequency: 15 },
@@ -49,20 +37,18 @@ export default function Results() {
   }
 
   const generateMedicalSummary = () => {
+    if (!userData) return '';
     return `
-      Patient: ${medicalData.firstName} ${medicalData.lastName}
-      Age: ${medicalData.age}
-      Height: ${medicalData.height} cm
-      Weight: ${medicalData.weight} lbs
-      Sex: ${medicalData.sex}
+      Patient: ${userData.first_name} ${userData.last_name}
+      Age: ${userData.basic_info.age}
+      Height: ${userData.basic_info.height} cm
+      Weight: ${userData.basic_info.weight} lbs
+      Sex: ${userData.basic_info.sex}
 
       Medical History:
-      ${medicalData.medicalHistory.map(history => `- ${history.disease}: Severity ${history.severity}/5, Probability ${history.probability}%`).join("\n")}
+      ${userData.medicalHistory.map(history => `- ${history.disease}: Severity ${history.severity}/5, Probability ${history.probability}%`).join("\n")}
 
-      Latest Visit on ${medicalData.latestVisit.date}:
-      Symptoms reported: ${medicalData.latestVisit.symptoms.join(", ")}
-
-      Additional Notes: Further consultation recommended based on recurring symptoms and treatment plan for schizophrenia.
+      Latest Visit: Please see symptoms and recommendations from your recent checkups.
     `;
   };
 
@@ -72,30 +58,29 @@ export default function Results() {
 
       {/* med summary */}
       <div className="bg-blue-50 p-6 rounded-lg shadow-md mb-6">
-        <h2 className="text-2xl font-semibold mb-4">Patient Information</h2>
-        <div className="text-lg text-gray-700 leading-relaxed">
-          <p><strong>Patient:</strong> {medicalData.firstName} {medicalData.lastName}</p>
-          <p><strong>Age:</strong> {medicalData.age}</p>
-          <p><strong>Height:</strong> {medicalData.height} cm</p>
-          <p><strong>Weight:</strong> {medicalData.weight} lbs</p>
-          <p><strong>Sex:</strong> {medicalData.sex}</p>
-        </div>
+        {userData ? (
+          <>
+            <h2 className="text-2xl font-semibold mb-4">Patient Information</h2>
+            <div className="text-lg text-gray-700 leading-relaxed">
+              <p><strong>Patient:</strong> {userData.first_name} {userData.last_name}</p>
+              <p><strong>Age:</strong> {userData.basic_info.age}</p>
+              <p><strong>Height:</strong> {userData.basic_info.height} cm</p>
+              <p><strong>Weight:</strong> {userData.basic_info.weight} lbs</p>
+              <p><strong>Sex:</strong> {userData.basic_info.sex}</p>
+            </div>
 
-        <h2 className="text-2xl font-semibold mt-6 mb-4">Medical History</h2>
-        <ul className="text-lg text-gray-700 leading-relaxed list-disc list-inside">
-          {medicalData.medicalHistory.map((history, index) => (
-            <li key={index}>
-              {history.disease}: Severity {history.severity}/5, Probability {history.probability}%
-            </li>
-          ))}
-        </ul>
-
-        <h2 className="text-2xl font-semibold mt-6 mb-4">Latest Visit</h2>
-        <div className="text-lg text-gray-700 leading-relaxed">
-          <p><strong>Date:</strong> {medicalData.latestVisit.date}</p>
-          <p><strong>Symptoms:</strong> {medicalData.latestVisit.symptoms.join(", ")}</p>
-          <p className="mt-4"><strong>Additional Notes:</strong> Further consultation recommended based on recurring symptoms and treatment plan for schizophrenia.</p>
-        </div>
+            <h2 className="text-2xl font-semibold mt-6 mb-4">Medical History</h2>
+            <ul className="text-lg text-gray-700 leading-relaxed list-disc list-inside">
+              {userData.medicalHistory.map((history, index) => (
+                <li key={index}>
+                  {history.disease}: Severity {history.severity}/5, Probability {history.probability}%
+                </li>
+              ))}
+            </ul>
+          </>
+        ) : (
+          <p>Loading medical data...</p>
+        )}
       </div>
 
       {/* sentiment chart */}
