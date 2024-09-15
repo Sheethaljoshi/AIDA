@@ -4,6 +4,8 @@ export default function VideoChat({ onAudioData }) {
   const videoRef = useRef(null)
   const [isRecording, setIsRecording] = useState(false)
   const mediaRecorderRef = useRef(null)
+  const wsRef = useRef(null);
+  const canvasRef = useRef(null)
 
   useEffect(() => {
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
@@ -13,6 +15,10 @@ export default function VideoChat({ onAudioData }) {
           video.srcObject = stream
           video.play()
 
+          const ws = new WebSocket("ws://localhost:8000/ws")
+          console.log("WS:" + ws)
+          wsRef.current = ws
+
           // Set up MediaRecorder
           mediaRecorderRef.current = new MediaRecorder(stream)
           
@@ -21,10 +27,13 @@ export default function VideoChat({ onAudioData }) {
               onAudioData(event.data)
             }
           }
+          
         })
         .catch(error => {
           console.error("Error accessing the camera and microphone:", error)
         })
+    } else {
+      console.log("Else")
     }
   }, [onAudioData])
 
@@ -36,6 +45,22 @@ export default function VideoChat({ onAudioData }) {
     }
     setIsRecording(!isRecording)
   }
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (videoRef.current && canvasRef.current && wsRef.current && wsRef.current.readyState == WebSocket.OPEN) {
+        const context = canvasRef.current.getContext('2d')
+        context.drawImage(videoRef.current, 0, 0, canvasRef.current.width, canvasRef.current.height)
+        canvasRef.current.toBlob(blob => {
+          if (blob) {
+            wsRef.current.send(blob);
+          }
+        }, 'video/webm')
+      }
+    }, 1000)
+
+    return () => clearInterval(interval)
+  }, [])
 
   return (
     <div className="relative">
