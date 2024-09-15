@@ -4,22 +4,32 @@ export default function ChatHistory() {
   const [chatHistory, setChatHistory] = useState([])
 
   useEffect(() => {
-    // fetch from backend!
-    const mockHistory = [
-      { id: 1, date: '2024-03-15', summary: 'Discussed headache symptoms' },
-      { id: 2, date: '2024-03-10', summary: 'Follow-up on medication side effects' },
-    ]
-    setChatHistory(mockHistory)
-  }, [])
+    const fetchData = async () => {
+        try {
+            const url = `http://127.0.0.1:8000/get_history?email=johndoe@gmail.com&first_name=John&last_name=Doe`;
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            const data = await response.json();
+            console.log(data);
+            setChatHistory(data);  // Update the correct state
+        } catch (error) {
+            console.error('Error fetching data:', error);
+        }
+    };
+
+    fetchData();
+  }, []);
 
   return (
     <div>
       <h2 className="text-2xl font-bold mb-4">Chat History</h2>
       <ul className="space-y-2">
-        {chatHistory.map(chat => (
-          <li key={chat.id} className="bg-white p-4 rounded-lg shadow">
+        {chatHistory.map((chat, index) => (
+          <li key={index} className="bg-white p-4 rounded-lg shadow">
             <p className="font-semibold">{chat.date}</p>
-            <p>{chat.summary}</p>
+            <p>{chat.title}</p>
           </li>
         ))}
       </ul>

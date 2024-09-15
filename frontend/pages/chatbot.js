@@ -21,7 +21,7 @@ export default function Chatbot() {
 
   const fetchChatHistory = async () => {
     try {
-      const response = await fetch('/api/chat_history') // create this endpoint
+      const response = await fetch('/api/chat_history') 
       if (!response.ok) {
         throw new Error('Failed to fetch chat history')
       }

@@ -3,14 +3,24 @@ from pymongo import MongoClient
 from pymongo.server_api import ServerApi
 from openai import OpenAI
 import json
+import uuid
 from io import BytesIO
 from dotenv import load_dotenv
 from bson import ObjectId
 from datetime import datetime
 from typing import List
 from pydantic import BaseModel
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["*"],
+)
 
 # MongoDB setup
 uri = "mongodb+srv://sh33thal24:7CGH0tmrDIsD9QrE@cluster0.klphh.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
@@ -107,22 +117,135 @@ def return_answer(question):
         answer = messages.data[0].content[0].text.value
         return answer
     
+    
+def return_title():
+    
+    client = OpenAI()
+    assistant = client.beta.assistants.create(
+        name="Personal Helper",
+        instructions="The person asking questions is John Doe. You are talking to him. You have his entire medical information file. You have to take the most recent object in the array of past convos and summarise it to give it a unique heading",
+        model="gpt-4-turbo",
+        tools=[{"type": "file_search"}],
+    )
+
+    assistant = client.beta.assistants.update(
+        assistant_id=assistant.id,
+        tool_resources={"file_search": {"vector_store_ids": ['vs_r70jSDRJR1LyHTCChmWyKTGd']}},
+    )
+
+    thread = client.beta.threads.create(
+        messages=[
+            {
+                "role": "user",
+                "content": "You have to take the most recent messages array object in the array of past convos and give it a unique heading from the data files provided. Response can have a maximum of 5 words."
+            },
+        ]
+    )
+
+    run = client.beta.threads.runs.create_and_poll(
+        thread_id=thread.id,
+        assistant_id=assistant.id,
+        instructions= "You have to take the most recent messages array object in the array of past convos and give it a unique heading from the data files provided. Response can have a maximum of 5 words.",
+    )
+
+    if run.status == 'completed':
+        messages = client.beta.threads.messages.list(
+            thread_id=thread.id,
+            run_id=run.id
+        )
+        answer = messages.data[0].content[0].text.value
+        print(answer)
+        return answer
+    
+    
+@app.post("/update_conversation_title/")
+async def update_conversation_title(
+    email: str = Form(...),
+    first_name: str = Form(...),
+    last_name: str = Form(...)
+):
+    # Fetch the most recent conversation for this user
+    user = collection.find_one(
+        {"email": email, "first_name": first_name, "last_name": last_name},
+        {"past_convos": {"$slice": -1}}  # Get the last conversation
+    )
+
+    if not user or "past_convos" not in user or len(user["past_convos"]) == 0:
+        raise HTTPException(status_code=404, detail="No conversation found for the user")
+
+    # Retrieve the most recent conversation
+    latest_conversation = user["past_convos"][0]
+
+    # Generate a new title using the return_title function
+    new_title = return_title()
+
+    # Update the title of the most recent conversation
+    result = collection.update_one(
+        {
+            "email": email, 
+            "first_name": first_name, 
+            "last_name": last_name, 
+            "past_convos.title": latest_conversation["title"]
+        },
+        {
+            "$set": {"past_convos.$.title": new_title}
+        }
+    )
+
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Failed to update the conversation title")
+    
+    # Optionally, export and upload the vector store
+    export_and_upload_to_vector_store()
+
+    return {"status": "Conversation title updated successfully", "new_title": new_title}
+    
+@app.get("/get_history")
+async def get_history(email: str, first_name: str, last_name: str):
+
+    query_result = collection.find_one(
+        {"email": email, "first_name": first_name, "last_name": last_name},
+        {"past_convos.date": 1, "past_convos.title": 1, "_id": 0}
+    )
+
+    if query_result:
+        # Extract only the 'date' and 'title' fields from each past convo
+        past_convos = query_result.get("past_convos", [])
+        return [{"date": convo.get("date"), "title": convo.get("title")} for convo in past_convos]
+    else:
+        return []
+
+    
 @app.post("/get_answer/")
 async def get_answer(
     email: str = Form(...),
     first_name: str = Form(...),
     last_name: str = Form(...),
-    question: str = Form(...),
-    title: str = Form(...)
+    question: str = Form(...)
 ):
+    # Fetch the most recent conversation for this user to get the unique_id (title)
+    user = collection.find_one(
+        {"email": email, "first_name": first_name, "last_name": last_name},
+        {"past_convos": {"$slice": -1}}  # Get the last conversation
+    )
+
+    if not user or "past_convos" not in user or len(user["past_convos"]) == 0:
+        raise HTTPException(status_code=404, detail="No conversation found for the user")
+
+    # Retrieve the unique ID (title) from the most recent conversation
+    latest_conversation = user["past_convos"][0]
+    unique_id = latest_conversation["title"]
+
+    # Process the question and generate the answer
     final_answer = return_answer(question)
 
+    # Update the latest conversation with the question and answer
     result = collection.update_one(
         {
             "email": email,
             "first_name": first_name,
             "last_name": last_name,
-            "past_convos.title": title
+            "past_convos.title": unique_id  # Match using the unique ID (title)
         },
         {
             "$push": {
@@ -139,6 +262,9 @@ async def get_answer(
     else:
         export_and_upload_to_vector_store()
         return {"answer": final_answer}
+    
+def generate_unique_id():
+    return str(uuid.uuid4())
         
 @app.post("/create_conversation/")
 async def create_conversation(
@@ -148,10 +274,11 @@ async def create_conversation(
 ):
 
     current_date = datetime.utcnow().strftime('%m/%d/%y')
+    unique_id = generate_unique_id()
 
     new_conversation = {
         "date": current_date,
-        "title": "",
+        "title": unique_id,
         "messages": [],
     }
 
@@ -163,7 +290,7 @@ async def create_conversation(
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="User not found")
 
-    return {"status": "Conversation created successfully"}
+    return unique_id
 
 @app.post("/new-medical-history/")
 async def insert_medical_history(
