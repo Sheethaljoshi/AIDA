@@ -1,35 +1,38 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import VideoChat from "../components/VideoChat";
 import ChatHistory from "../components/ChatHistory"; 
 import ParticlesBackground from '../components/particlesBackground';
+import { memo } from 'react';
 
+// memoize components that don't need to re-render
+const MemoizedParticlesBackground = memo(ParticlesBackground);
+const MemoizedVideoChat = memo(VideoChat);
+const MemoizedChatHistory = memo(ChatHistory);
 
 export default function Chatbot() {
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = useCallback(async (e) => {
     e.preventDefault()
     if (!input.trim()) return
 
     const userMessage = { text: input, user: true }
-    setMessages([...messages, userMessage])
+    setMessages((prevMessages) => [...prevMessages, userMessage])
     setInput('')
 
-    // bot response after 1 second
+    // Simulate bot response after 1 second
     setTimeout(() => {
       const botMessage = { text: `You said: ${input}`, user: false }
-      setMessages(prev => [...prev, botMessage])
+      setMessages((prevMessages) => [...prevMessages, botMessage])
     }, 1000)
-  }
+  }, [input])
 
-  const handleAudioData = async (audioBlob) => {
-    // Create a FormData object to send the audio file
+  const handleAudioData = useCallback(async (audioBlob) => {
     const formData = new FormData()
     formData.append('file', audioBlob, 'audio.webm')
 
     try {
-      // Send the audio data to your backend
       const response = await fetch('/api/transcribe', {
         method: 'POST',
         body: formData,
@@ -41,30 +44,25 @@ export default function Chatbot() {
 
       const { text } = await response.json()
 
-      // Add the transcribed text to the chat
-      setMessages(prev => [...prev, { text, user: true }])
-
-      // You can add logic here to send the transcribed text to your chatbot backend
-      // and get a response
-
+      setMessages((prevMessages) => [...prevMessages, { text, user: true }])
     } catch (error) {
       console.error('Error transcribing audio:', error)
-      setMessages(prev => [...prev, { text: 'Error transcribing audio', user: false }])
+      setMessages((prevMessages) => [...prevMessages, { text: 'Error transcribing audio', user: false }])
     }
-  }
+  }, [])
 
   return (
     <div className="relative">
-      {/* particle background */}
+      {/* Memoized particle background */}
       <div className="absolute inset-0 z-0">
-        <ParticlesBackground />
+        <MemoizedParticlesBackground />
       </div>
 
       {/* content with a higher z-index */}
       <div className="relative z-10 flex h-128">
         {/* chat history */}
         <aside className="w-1/4 bg-gray-100 p-4 shadow-md rounded-lg"> 
-          <ChatHistory /> 
+          <MemoizedChatHistory /> 
         </aside>
 
         {/* main content: chat and video */}
@@ -74,9 +72,9 @@ export default function Chatbot() {
           </header>
 
           <div className="flex flex-1 space-x-4 px-4">
-            {/* video chat */}
+            {/* memoized video chat */}
             <div className="w-1/2">
-              <VideoChat onAudioData={handleAudioData} />
+              <MemoizedVideoChat onAudioData={handleAudioData} />
             </div>
 
             {/* chat */}
