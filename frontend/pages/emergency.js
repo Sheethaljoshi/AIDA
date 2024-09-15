@@ -1,7 +1,9 @@
 export default function Emergency() {
   return (
-    <div className="max-w-2xl mx-auto font-sans">
+    <div className="max-w-4xl mx-auto font-sans">
       <h1 className="text-3xl font-bold mb-6 text-center text-blue-400">Emergency Alert System</h1>
+      
+      {/* emergency contacts */}
       <div className="bg-white rounded-lg shadow-md p-6 mb-6">
         <h2 className="text-2xl font-semibold mb-4 text-blue-400">Emergency Contacts</h2>
         <ul className="space-y-2">
@@ -10,14 +12,14 @@ export default function Emergency() {
           <li><strong>Crisis Helpline:</strong> 1-800-273-8255</li>
         </ul>
       </div>
+      
+      {/* nearby hospitals */}
       <div className="bg-white rounded-lg shadow-md p-6">
         <h2 className="text-2xl font-semibold mb-4 text-blue-400">Nearby Hospitals</h2>
         <p className="mb-4">Use the map below to find nearby hospitals and urgent care centers:</p>
-        <div className="aspect-w-16 aspect-h-9">
+        <div className="w-full h-[600px] rounded-lg overflow-hidden">
           <iframe
-            src="https://www.google.com/maps/embed?pb=!1m16!1m12!1m3!1d96714.68291250926!2d-74.05953969406828!3d40.75468158321536!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!2m1!1shospitals!5e0!3m2!1sen!2sus!4v1617902138404!5m2!1sen!2sus"
-            width="600"
-            height="450"
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2948.338140362163!2d-71.0956176841842!3d42.36009127918785!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x89e370a4e72c7f91%3A0xe21a8fdd7ed4a9c4!2sMassachusetts%20Institute%20of%20Technology!5e0!3m2!1sen!2sus!4v1694770981261!5m2!1sen!2sus"
             style={{ border: 0 }}
             allowFullScreen=""
             loading="lazy"
@@ -26,5 +28,5 @@ export default function Emergency() {
         </div>
       </div>
     </div>
-  )
+  );
 }
