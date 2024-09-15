@@ -7,6 +7,8 @@ from io import BytesIO
 from dotenv import load_dotenv
 from bson import ObjectId
 from datetime import datetime
+from typing import List
+from pydantic import BaseModel
 
 app = FastAPI()
 
@@ -146,15 +148,13 @@ async def create_conversation(
     email: str = Form(...),
     first_name: str = Form(...),
     last_name: str = Form(...),
-    title: str = Form(...)
 ):
-    new_convo_id = ObjectId()
 
     current_date = datetime.utcnow().strftime('%m/%d/%y')
 
     new_conversation = {
         "date": current_date,
-        "title": title,
+        "title": "",
         "messages": [],
     }
 
@@ -193,6 +193,7 @@ async def insert_medical_history(
     export_and_upload_to_vector_store()
 
     return {"status": "Medical history inserted successfully"}
+
 
 
 if __name__ == "__main__":
