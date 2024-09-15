@@ -3,6 +3,7 @@ import VideoChat from "../components/VideoChat";
 import ChatHistory from "../components/ChatHistory"; 
 import ParticlesBackground from '../components/particlesBackground';
 
+
 export default function Chatbot() {
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
@@ -20,6 +21,36 @@ export default function Chatbot() {
       const botMessage = { text: `You said: ${input}`, user: false }
       setMessages(prev => [...prev, botMessage])
     }, 1000)
+  }
+
+  const handleAudioData = async (audioBlob) => {
+    // Create a FormData object to send the audio file
+    const formData = new FormData()
+    formData.append('file', audioBlob, 'audio.webm')
+
+    try {
+      // Send the audio data to your backend
+      const response = await fetch('/api/transcribe', {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (!response.ok) {
+        throw new Error('Transcription failed')
+      }
+
+      const { text } = await response.json()
+
+      // Add the transcribed text to the chat
+      setMessages(prev => [...prev, { text, user: true }])
+
+      // You can add logic here to send the transcribed text to your chatbot backend
+      // and get a response
+
+    } catch (error) {
+      console.error('Error transcribing audio:', error)
+      setMessages(prev => [...prev, { text: 'Error transcribing audio', user: false }])
+    }
   }
 
   return (
@@ -45,7 +76,7 @@ export default function Chatbot() {
           <div className="flex flex-1 space-x-4 px-4">
             {/* video chat */}
             <div className="w-1/2">
-              <VideoChat />
+              <VideoChat onAudioData={handleAudioData} />
             </div>
 
             {/* chat */}
