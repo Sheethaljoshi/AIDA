@@ -39,7 +39,7 @@ h2 {
 }
 
 .btn-secondary {
-  @apply bg-secondary hover:bg-pink-600;
+  @apply bg-secondary hover:bg-blue-600;
 }
 
 .input {

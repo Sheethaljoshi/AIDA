@@ -3,11 +3,11 @@ import ParticlesBackground from '../components/particlesBackground';
 
 export default function Home() {
   return (
-    <div className="relative min-h-screen"> {/* Ensure the page takes up full height */}
-      <ParticlesBackground />{/* Particles in the background */}
+    <div className="relative min-h-screen"> 
+      <ParticlesBackground />{/* particles in the background */}
       
-      <div className="relative z-10 space-y-8"> {/* Content above the particles */}
-        <h1 className="text-4xl font-bold text-center text-blue-400">AIDA</h1>
+      <div className="relative z-10 space-y-8"> {/* content above the particles */}
+        <h1 className="text-4xl font-bold text-center text-blue-400">AIDA Artificial Intelligence Diagnostic Assistant</h1>
         
         <div className="grid md:grid-cols-2 gap-6">
           <FeatureCard 
@@ -21,9 +21,9 @@ export default function Home() {
             link="/medical-info"
           />
           <FeatureCard 
-            title="Symptom Checker" 
+            title="User Info" 
             description="Enter your symptoms for an AI-powered assessment."
-            link="/symptom-checker"
+            link="/setup"
           />
           <FeatureCard 
             title="Emergency Alert System" 
