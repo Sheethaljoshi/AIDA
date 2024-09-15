@@ -1,6 +1,6 @@
+from fastapi import FastAPI, HTTPException, Form
 from pymongo import MongoClient
 from pymongo.server_api import ServerApi
-from fastapi import FastAPI, HTTPException, Form
 from openai import OpenAI
 import json
 from io import BytesIO
@@ -64,7 +64,6 @@ def export_and_upload_to_vector_store():
     vector_store_file = create_and_upload_vector_store_file(created_file.id)
 
     return vector_store_file
-
 
 def return_answer(question):
     
@@ -141,8 +140,6 @@ async def get_answer(
         export_and_upload_to_vector_store()
         return {"answer": final_answer}
         
-    
-
 @app.post("/create_conversation/")
 async def create_conversation(
     email: str = Form(...),
@@ -167,7 +164,6 @@ async def create_conversation(
         raise HTTPException(status_code=404, detail="User not found")
 
     return {"status": "Conversation created successfully"}
-
 
 @app.post("/new-medical-history/")
 async def insert_medical_history(
@@ -194,7 +190,39 @@ async def insert_medical_history(
 
     return {"status": "Medical history inserted successfully"}
 
+@app.get("/api/chat_history")
+async def get_chat_history(email: str = "johndoe@gmail.com", first_name: str = "John", last_name: str = "Doe"):
+    user = collection.find_one({"email": email, "first_name": first_name, "last_name": last_name})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    chat_history = user.get("past_convos", [])
+    return chat_history
 
+@app.post("/create_conversation/")
+async def create_conversation(
+    email: str = Form(...),
+    first_name: str = Form(...),
+    last_name: str = Form(...),
+    title: str = Form(...)
+):
+    current_date = datetime.utcnow().strftime('%m/%d/%y')
+
+    new_conversation = {
+        "date": current_date,
+        "title": title,
+        "messages": [],
+    }
+
+    result = collection.update_one(
+        {"email": email, "first_name": first_name, "last_name": last_name},
+        {"$push": {"past_convos": new_conversation}}
+    )
+
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    return {"status": "Conversation created successfully"}
 
 if __name__ == "__main__":
     import uvicorn

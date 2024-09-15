@@ -56,4 +56,3 @@ while True:
     
     gpt_reply, conversation_history = chat_with_gpt(user_input, conversation_history)
     print(f"GPT: {gpt_reply}")
-
