@@ -62,7 +62,7 @@ export default function Results() {
         <div className="text-lg text-gray-700 leading-relaxed">
           <p><strong>Patient:</strong> {medicalData.firstName} {medicalData.lastName}</p>
           <p><strong>Age:</strong> {medicalData.age}</p>
-          <p><strong>Height:</strong> {medicalData.height} inches</p>
+          <p><strong>Height:</strong> {medicalData.height} cm</p>
           <p><strong>Weight:</strong> {medicalData.weight} lbs</p>
           <p><strong>Sex:</strong> {medicalData.sex}</p>
         </div>
