@@ -25,9 +25,6 @@ def export_and_upload_to_vector_store():
         data = list(collection.find())
         for item in data:
             item['_id'] = str(item['_id'])
-        if 'past_convos' in item:
-                for convo in item['past_convos']:
-                    convo['_convoid'] = str(convo['_convoid'])
         json_bytes = json.dumps(data).encode('utf-8')
         return BytesIO(json_bytes)
 
@@ -115,22 +112,16 @@ async def get_answer(
     first_name: str = Form(...),
     last_name: str = Form(...),
     question: str = Form(...),
-    convoid: str = Form(...)
+    title: str = Form(...)
 ):
     final_answer = return_answer(question)
-    
-    # Convert convoid to ObjectId
-    try:
-        object_id = ObjectId(convoid)
-    except Exception as e:
-        raise HTTPException(status_code=400, detail="Invalid ObjectId format")
 
     result = collection.update_one(
         {
             "email": email,
             "first_name": first_name,
             "last_name": last_name,
-            "past_convos._convoid": object_id
+            "past_convos.title": title
         },
         {
             "$push": {
@@ -165,7 +156,6 @@ async def create_conversation(
         "date": current_date,
         "title": title,
         "messages": [],
-        "_convoid": new_convo_id
     }
 
     result = collection.update_one(
@@ -176,7 +166,7 @@ async def create_conversation(
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="User not found")
 
-    return {"status": "Conversation created successfully", "conversation_id": str(new_convo_id)}
+    return {"status": "Conversation created successfully"}
 
 
 @app.post("/new-medical-history/")
