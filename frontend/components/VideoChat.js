@@ -20,8 +20,6 @@ export default function VideoChat({ onAudioData }) {
           const ws = new WebSocket("ws://localhost:8000/ws")
           wsRef.current = ws
 
-
-          // Set up MediaRecorder
           mediaRecorderRef.current = new MediaRecorder(stream)
           
           mediaRecorderRef.current.ondataavailable = (event) => {
@@ -37,10 +35,11 @@ export default function VideoChat({ onAudioData }) {
   }, [onAudioData])
 
   const toggleRecording = () => {
-    if (isRecording) {
-      mediaRecorderRef.current.stop()
-    } else {
+    fetch('http://127.0.0.1:8000/start-recording/')
+    if (!isRecording) {
       mediaRecorderRef.current.start()
+    } else {
+      mediaRecorderRef.current.stop()
     }
     setIsRecording(!isRecording)
   }
@@ -58,10 +57,11 @@ export default function VideoChat({ onAudioData }) {
       }
     }, 1000)
     
-
     return () => clearInterval(interval)
   }, [])
+
   const endSession = () => {
+    fetch('http://127.0.0.1:8000/stop-recording/')
     // stop the recording if still active
     if (isRecording) {
       mediaRecorderRef.current.stop()
@@ -70,22 +70,25 @@ export default function VideoChat({ onAudioData }) {
     router.push('/results')
   }
 
+  const handleClick = () => {
+    if (isRecording) {
+      endSession()
+    } else {
+      toggleRecording()
+    }
+  }
+
   return (
     <div className="relative">
       <video ref={videoRef} className="w-full h-84 bg-black rounded-lg"></video>
       <div className="flex justify-center mt-4 space-x-4">
         <button 
           className={`px-4 py-2 rounded-full ${isRecording ? 'bg-red-500' : 'bg-green-500'} text-white`}
-          onClick={toggleRecording}
+          onClick={handleClick}
         >
-          {isRecording ? 'Stop Recording' : 'Start Recording'}
+          {isRecording ? 'End Session' : 'Start Session'}
         </button>
-        <button 
-          className="bg-red-500 text-white px-4 py-2 rounded-full"
-          onClick={endSession} 
-        >
-          End Session
-        </button>
+
         <canvas ref={canvasRef} className="hidden"/>
       </div>
     </div>

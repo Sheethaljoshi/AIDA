@@ -31,7 +31,7 @@ const particlesConfig = {
         anim: {
           enable: false,
           speed: 1,
-          opacity_min: 0.1,
+          opacity_min: 0.05,
           sync: false,
         },
       },
@@ -54,7 +54,7 @@ const particlesConfig = {
       },
       move: {
         enable: true,
-        speed: 8,
+        speed: 5,
         direction: "none",
         random: false,
         straight: false,
