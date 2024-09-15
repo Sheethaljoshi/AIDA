@@ -194,7 +194,7 @@ async def insert_medical_history(
         'probability': probability
     }
 
-    #find user by email, first name, last name, and push new medical history
+    # find user by email, first name, last name, and push new medical history
     result = collection.update_one(
         {'email': email, 'first_name': first_name, 'last_name': last_name},
         {'$push': {'medical_history': medical_history_data}}
