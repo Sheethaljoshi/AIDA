@@ -1,9 +1,14 @@
 from pymongo import MongoClient
 from pymongo.server_api import ServerApi
+from fastapi import FastAPI, HTTPException, Form
 from openai import OpenAI
 import json
 from io import BytesIO
 from dotenv import load_dotenv
+from bson import ObjectId
+from datetime import datetime
+
+app = FastAPI()
 
 # MongoDB setup
 uri = "mongodb+srv://sh33thal24:7CGH0tmrDIsD9QrE@cluster0.klphh.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
@@ -58,9 +63,7 @@ def export_and_upload_to_vector_store():
 
     return vector_store_file
 
-export_and_upload_to_vector_store()
 
-question = "when did i last have a fever?"
 def return_answer(question):
     
     client = OpenAI()
@@ -103,6 +106,106 @@ def return_answer(question):
         answer = messages.data[0].content[0].text.value
         return answer
     
-final_answer = return_answer(question)
-print(final_answer)
+@app.post("/get_answer/")
+async def get_answer(
+    email: str = Form(...),
+    first_name: str = Form(...),
+    last_name: str = Form(...),
+    question: str = Form(...),
+    convoid: str = Form(...)
+):
+    final_answer = return_answer(question)
     
+    # Convert convoid to ObjectId
+    try:
+        object_id = ObjectId(convoid)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail="Invalid ObjectId format")
+
+    result = collection.update_one(
+        {
+            "email": email,
+            "first_name": first_name,
+            "last_name": last_name,
+            "past_convos._convoid": object_id
+        },
+        {
+            "$push": {
+                "past_convos.$.messages": [
+                    {"role": "user", "content": question},
+                    {"role": "assistant", "content": final_answer}
+                ]
+            }
+        }
+    )
+
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    else:
+        export_and_upload_to_vector_store()
+        return {"answer": final_answer}
+        
+    
+
+@app.post("/create_conversation/")
+async def create_conversation(
+    email: str = Form(...),
+    first_name: str = Form(...),
+    last_name: str = Form(...),
+    title: str = Form(...)
+):
+    new_convo_id = ObjectId()
+
+    current_date = datetime.utcnow().strftime('%m/%d/%y')
+
+    new_conversation = {
+        "date": current_date,
+        "title": title,
+        "messages": [],
+        "_convoid": new_convo_id
+    }
+
+    result = collection.update_one(
+        {"email": email, "first_name": first_name, "last_name": last_name},
+        {"$push": {"past_convos": new_conversation}}
+    )
+
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    return {"status": "Conversation created successfully", "conversation_id": str(new_convo_id)}
+
+
+@app.post("/new-medical-history/")
+async def insert_medical_history(
+    email: str = Form(...),
+    first_name: str = Form(...),
+    last_name: str = Form(...),
+    disease: str = Form(...),
+    severity: int = Form(...),
+    probability: int = Form(...)
+):
+    medical_history_data = {
+        'disease': disease,
+        'severity': severity,
+        'probability': probability
+    }
+
+    #find user by email, first name, last name, and push new medical history
+    result = collection.update_one(
+        {'email': email, 'first_name': first_name, 'last_name': last_name},
+        {'$push': {'medical_history': medical_history_data}}
+    )
+
+    # Check if a user was found and updated
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="User not found")
+    else:
+        export_and_upload_to_vector_store()
+
+    return {"status": "Medical history inserted successfully"}
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="127.0.0.1", port=8000)
