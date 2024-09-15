@@ -347,7 +347,7 @@ async def start_recording(background_tasks: BackgroundTasks, email: str, first_n
     
     global recording
     recording = True
-    background_tasks.add_task(poll_transcript)
+    background_tasks.add_task(poll_transcript(email, first_name, last_name))
 
     
 def poll_transcript(email: str, first_name: str, last_name: str):
@@ -363,42 +363,43 @@ def poll_transcript(email: str, first_name: str, last_name: str):
                 break
         
         user = collection.find_one(
-        {"email": email, "first_name": first_name, "last_name": last_name},
-        {"past_convos": {"$slice": -1}}  # Get the last conversation
-    )
+            {"email": email, "first_name": first_name, "last_name": last_name},
+            {"past_convos": {"$slice": -1}}  # Get the last conversation
+        )
 
-    if not user or "past_convos" not in user or len(user["past_convos"]) == 0:
-        raise HTTPException(status_code=404, detail="No conversation found for the user")
+        if not user or "past_convos" not in user or len(user["past_convos"]) == 0:
+            raise HTTPException(status_code=404, detail="No conversation found for the user")
 
-    # Retrieve the unique ID (title) from the most recent conversation
-    latest_conversation = user["past_convos"][0]
-    unique_id = latest_conversation["title"]
+        # Retrieve the unique ID (title) from the most recent conversation
+        latest_conversation = user["past_convos"][0]
+        unique_id = latest_conversation["title"]
 
-    # Process the question and generate the answer
-    final_answer = return_answer(transcript)
+        # Process the question and generate the answer
+        final_answer = return_answer(transcript)
+        
 
-    # Update the latest conversation with the question and answer
-    result = collection.update_one(
-        {
-            "email": email,
-            "first_name": first_name,
-            "last_name": last_name,
-            "past_convos.title": unique_id  # Match using the unique ID (title)
-        },
-        {
-            "$push": {
-                "past_convos.$.messages": [
-                    {"role": "user", "content": transcript},
-                    {"role": "assistant", "content": final_answer}
-                ]
+        # Update the latest conversation with the question and answer
+        result = collection.update_one(
+            {
+                "email": email,
+                "first_name": first_name,
+                "last_name": last_name,
+                "past_convos.title": unique_id  # Match using the unique ID (title)
+            },
+            {
+                "$push": {
+                    "past_convos.$.messages": [
+                        {"role": "user", "content": transcript},
+                        {"role": "assistant", "content": final_answer}
+                    ]
+                }
             }
-        }
-    )
+        )
 
-    if result.matched_count == 0:
-        raise HTTPException(status_code=404, detail="Conversation not found")
-    else:
-        export_and_upload_to_vector_store()
+        if result.matched_count == 0:
+            raise HTTPException(status_code=404, detail="Conversation not found")
+        else:
+            export_and_upload_to_vector_store()
         
         print(transcript)
         
