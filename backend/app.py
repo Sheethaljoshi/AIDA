@@ -1,22 +1,30 @@
 from fastapi import FastAPI, HTTPException, Form
 from pymongo import MongoClient
 from pymongo.server_api import ServerApi
+from fastapi import BackgroundTasks, FastAPI, HTTPException, Form 
+# from fastapi_utils.tasks import repeat_every
+from apscheduler.schedulers.background import BackgroundScheduler
+from datetime import datetime, timedelta
 from openai import OpenAI
 import json
 from io import BytesIO
 from dotenv import load_dotenv
-from bson import ObjectId
 from datetime import datetime
-from typing import List
-from pydantic import BaseModel
+import wav
+
+
 
 app = FastAPI()
+scheduler = BackgroundScheduler()
+scheduler.start()
 
 # MongoDB setup
 uri = "mongodb+srv://sh33thal24:7CGH0tmrDIsD9QrE@cluster0.klphh.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 client = MongoClient(uri, server_api=ServerApi('1'))
 db = client["aida"]
 collection = db["users"]
+transcript = None
+recording = True
 
 load_dotenv()
 
@@ -223,6 +231,30 @@ async def create_conversation(
         raise HTTPException(status_code=404, detail="User not found")
 
     return {"status": "Conversation created successfully"}
+@app.get("/start-recording/")
+async def start_recording(background_tasks: BackgroundTasks):
+    global recording
+    recording = True
+    background_tasks.add_task(poll_transcript)
+
+    
+def poll_transcript():
+    global recording
+    recording = True
+    while recording:
+        global transcript
+        transcript = wav.record_audio_and_get_transcript()
+        print(recording)
+
+@app.get("/stop-recording/")
+async def stop_recording():
+    global recording
+    recording = False
+    print(recording)
+
+@app.get("/")
+def root():
+    return transcript
 
 if __name__ == "__main__":
     import uvicorn
