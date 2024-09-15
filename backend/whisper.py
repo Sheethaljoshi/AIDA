@@ -5,12 +5,15 @@ from dotenv import load_dotenv
 load_dotenv()
 
 client = OpenAI(
-    api_key=os.getenv("OPENAI_KEY"),
+    api_key=os.getenv("WHISPER_KEY"),
 )
 
-audio_file= open("output.wav", "rb")
-transcription = client.audio.transcriptions.create(
-  model="whisper-1", 
-  file=audio_file
-)
-print(transcription.text)
+def get_transcript(filepath):
+  audio_file= open(filepath, "rb")
+  transcription = client.audio.transcriptions.create(
+    model="whisper-1", 
+    file=audio_file
+  )
+  if len(transcription.text) < 15:
+    return None
+  return transcription.text

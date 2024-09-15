@@ -35,34 +35,34 @@ export default function Chatbot() {
   const handleSubmit = useCallback(async (e) => {
     e.preventDefault()
     if (!input.trim()) return
-
+  
     const userMessage = { text: input, user: true }
     setMessages((prevMessages) => [...prevMessages, userMessage])
     setInput('')
-
+  
     try {
-      const response = await fetch('/get_answer/', {
+      const response = await fetch('http://127.0.0.1:8000/get_answer/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
         body: new URLSearchParams({
-          email: 'johndoe@gmail.com', // need actual user email
-          first_name: 'John', // need actual user first name
-          last_name: 'Doe', // need actual user last name
+          email: 'johndoe@gmail.com',
+          first_name: 'John',
+          last_name: 'Doe',
           question: input,
-          title: 'Current Conversation' // what the fuck???
+          title: 'Current Conversation'
         })
       })
-
+  
       if (!response.ok) {
         throw new Error('Failed to get answer from backend')
       }
-
+  
       const data = await response.json()
       const botMessage = { text: data.answer, user: false }
       setMessages((prevMessages) => [...prevMessages, botMessage])
-
+  
       // refresh chat history after new message
       fetchChatHistory()
     } catch (error) {
@@ -71,7 +71,7 @@ export default function Chatbot() {
       setMessages((prevMessages) => [...prevMessages, errorMessage])
     }
   }, [input])
-
+  
   const handleAudioData = useCallback(async (audioBlob) => {
     const formData = new FormData()
     formData.append('file', audioBlob, 'audio.webm')

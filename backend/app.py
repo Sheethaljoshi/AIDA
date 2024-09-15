@@ -1,24 +1,28 @@
 from fastapi import FastAPI, HTTPException, Form
 from pymongo import MongoClient
 from pymongo.server_api import ServerApi
+from fastapi import BackgroundTasks, FastAPI, HTTPException, Form 
+# from fastapi_utils.tasks import repeat_every
+from apscheduler.schedulers.background import BackgroundScheduler
+from datetime import datetime, timedelta
 from openai import OpenAI
 import json
 import uuid
 from io import BytesIO
 from dotenv import load_dotenv
-from bson import ObjectId
 from datetime import datetime
-from typing import List
-from pydantic import BaseModel
+import wav
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
+scheduler = BackgroundScheduler()
+scheduler.start()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["http://localhost:3000"],
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_methods=["*"],
     allow_headers=["*"],
 )
 
@@ -27,6 +31,8 @@ uri = "mongodb+srv://sh33thal24:7CGH0tmrDIsD9QrE@cluster0.klphh.mongodb.net/?ret
 client = MongoClient(uri, server_api=ServerApi('1'))
 db = client["aida"]
 collection = db["users"]
+transcript = None
+recording = True
 
 load_dotenv()
 
@@ -318,7 +324,7 @@ async def insert_medical_history(
     return {"status": "Medical history inserted successfully"}
 
 @app.get("/api/chat_history")
-async def get_chat_history(email: str = "johndoe@gmail.com", first_name: str = "John", last_name: str = "Doe"):
+async def get_chat_history(email: str, first_name: str, last_name: str):
     user = collection.find_one({"email": email, "first_name": first_name, "last_name": last_name})
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -350,6 +356,34 @@ async def create_conversation(
         raise HTTPException(status_code=404, detail="User not found")
 
     return {"status": "Conversation created successfully"}
+@app.get("/start-recording/")
+async def start_recording(background_tasks: BackgroundTasks):
+    global recording
+    recording = True
+    background_tasks.add_task(poll_transcript)
+
+    
+def poll_transcript():
+    global recording
+    recording = True
+    while recording:
+        global transcript
+        last_ten = wav.record_audio_and_get_transcript()
+        if last_ten:
+            transcript += last_ten
+        else:
+            break
+        # print(recording)
+
+@app.get("/stop-recording/")
+async def stop_recording():
+    global recording
+    recording = False
+    print(recording)
+
+@app.get("/")
+def root():
+    return transcript
 
 if __name__ == "__main__":
     import uvicorn
