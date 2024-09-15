@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Form
+from fastapi import FastAPI, HTTPException, Form, WebSocket
 from pymongo import MongoClient
 from pymongo.server_api import ServerApi
 from fastapi import BackgroundTasks, FastAPI, HTTPException, Form 
@@ -9,12 +9,16 @@ from openai import OpenAI
 import json
 import uuid
 from io import BytesIO
+from hume import HumeBatchClient
+from hume.models.config import FaceConfig
+from starlette.websockets import WebSocketDisconnect, WebSocketState
 from dotenv import load_dotenv
 from datetime import datetime
 import wav
 from fastapi.middleware.cors import CORSMiddleware
 import requests
 import json 
+import tempfile
 
 app = FastAPI()
 scheduler = BackgroundScheduler()
@@ -412,7 +416,59 @@ def poll_transcript(email: str, first_name: str, last_name: str):
                 break
         print("returning to ")
     print("done")
-    
+
+sentiments = {'Anger': 0, 'Anxiety': 0, 'Distress': 0, 'Horror': 0, 'Pain': 0}
+sentCount = 0
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    global sentiments
+    global sentCount
+    await websocket.accept()
+    while True:
+        try:
+            data = await websocket.receive_bytes()
+            filename = ""
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".jpeg") as phil:
+                phil.write(data)
+                filename = phil.name
+
+            client = HumeBatchClient("YqYVsbGjAb8AnUQCrcccymbg9d953CtKhI4PW9A4VRIQCQss")
+            config = FaceConfig(identify_faces=True)
+            job = client.submit_job(None, [config], files=[filename])
+            job.await_complete()
+            preds = job.get_predictions()
+
+            curAnger = preds[0]['results']['predictions'][0]['models']['face']['grouped_predictions'][0]['predictions'][0]['emotions'][4]['score']
+            curAnxiety = preds[0]['results']['predictions'][0]['models']['face']['grouped_predictions'][0]['predictions'][0]['emotions'][5]['score']
+            curDistress = preds[0]['results']['predictions'][0]['models']['face']['grouped_predictions'][0]['predictions'][0]['emotions'][20]['score']
+            curHorror = preds[0]['results']['predictions'][0]['models']['face']['grouped_predictions'][0]['predictions'][0]['emotions'][30]['score']
+            curPain = preds[0]['results']['predictions'][0]['models']['face']['grouped_predictions'][0]['predictions'][0]['emotions'][35]['score']
+            if (sentCount != 0):
+                sentiments['Anger'] = ((sentCount * sentiments['Anger']) + curAnger) / (sentCount + 1)
+                sentiments['Anxiety'] = ((sentCount * sentiments['Anxiety']) + curAnger) / (sentCount + 1)
+                sentiments['Distress'] = ((sentCount * sentiments['Distress']) + curAnger) / (sentCount + 1)
+                sentiments['Horror'] = ((sentCount * sentiments['Horror']) + curAnger) / (sentCount + 1)
+                sentiments['Pain'] = ((sentCount * sentiments['Pain']) + curAnger) / (sentCount + 1)
+            else:
+                sentiments['Anger'] += curAnger
+                sentiments['Anxiety'] += curAnxiety
+                sentiments['Distress'] += curDistress
+                sentiments['Horror'] += curHorror
+                sentiments['Pain'] += curPain
+            sentCount += 1            
+
+        except WebSocketDisconnect:
+            print("Websocket disconnected")
+            break
+        except Exception as e:
+            print(f"Error during processing: {e}")
+            if websocket.application_state == WebSocketState.CONNECTED:
+                await websocket.send_text(f"Error during processing{e}")
+                
+@app.get("/avgs")
+def getAvgs():
+    return sentiments
     
     
 @app.get("/test/")

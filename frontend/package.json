@@ -16,6 +16,8 @@
     "next": "^14.2.11",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "dotenv": "^16.4.5",
+    "hume": "^0.8.10",
     "recharts": "^2.12.7",
     "tsparticles": "^3.5.0",
     "tsparticles-slim": "^2.12.0"

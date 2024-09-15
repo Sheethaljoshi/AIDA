@@ -24,15 +24,29 @@ export default function Results() {
   const [sentimentData, setSentimentData] = useState([]);
 
   useEffect(() => {
+    getEmotionsAvgs()
     // simulated sentiment data for the graph
-    setSentimentData([
-      { name: 'Positive', frequency: 25 },
-      { name: 'Negative', frequency: 15 },
-      { name: 'Neutral', frequency: 20 },
-      { name: 'Surprised', frequency: 10 },
-      { name: 'Anxious', frequency: 30 }
-    ]);
+    // setSentimentData([
+    //   { name: 'Positive', frequency: 25 },
+    //   { name: 'Negative', frequency: 15 },
+    //   { name: 'Neutral', frequency: 20 },
+    //   { name: 'Surprised', frequency: 10 },
+    //   { name: 'Anxious', frequency: 30 }
+    // ]);
   }, []);
+
+  const getEmotionsAvgs = () => {
+    fetch('http://127.0.0.1:8000/avgs')
+      .then(response => response.json())
+      .then(data => setSentimentData([
+        { name: 'Anger', frequency: data['Anger'] },
+        { name: 'Anxiety', frequency: data['Anxiety'] },
+        { name: 'Distress', frequency: data['Distress'] },
+        { name: 'Horror', frequency: data['Horror'] },
+        { name: 'Pain', frequency: data['Pain'] },
+      ]))
+    
+  }
 
   const generateMedicalSummary = () => {
     return `
