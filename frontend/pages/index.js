@@ -7,28 +7,31 @@ export default function Home() {
       <ParticlesBackground />{/* particles in the background */}
       
       <div className="relative z-10 space-y-8"> {/* content above the particles */}
-        <h1 className="text-4xl font-bold text-center text-blue-400">AIDA Artificial Intelligence Diagnostic Assistant</h1>
+        <h1 className="text-center">
+          <span className="block text-6xl font-bold text-primary">AIDA</span>
+          <span className="block text-2xl font-semibold text-gray-600">Artificial Intelligence Diagnostic Assistant</span>
+        </h1>
         
         <div className="grid md:grid-cols-2 gap-6">
           <FeatureCard 
-            title="AI-powered FAQ and Chatbot" 
-            description="Ask medical questions and upload photos for accurate responses."
-            link="/chatbot"
-          />
-          <FeatureCard 
-            title="Credible Medical Information Hub" 
-            description="Access verified medical information from trusted sources."
-            link="/medical-info"
-          />
-          <FeatureCard 
             title="User Info" 
-            description="Enter your symptoms for an AI-powered assessment."
+            description="Provide your personal details so AIDA can offer a tailored experience based on your health profile."
             link="/setup"
           />
           <FeatureCard 
+            title="AI-powered FAQ and Chatbot" 
+            description="Chat with AIDA to get instant, AI-driven answers to your medical questions and more."
+            link="/chatbot"
+          />
+          <FeatureCard 
             title="Emergency Alert System" 
-            description="Find nearby hospitals and emergency contacts quickly."
+            description="Quickly locate nearby hospitals and access essential emergency contacts."
             link="/emergency"
+          />
+          <FeatureCard 
+            title="Credible Medical Information Hub" 
+            description="Browse trustworthy medical information to make informed health decisions."
+            link="/medical-info"
           />
         </div>
       </div>

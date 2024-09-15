@@ -3,6 +3,7 @@ import VideoChat from "../components/VideoChat";
 import ChatHistory from "../components/ChatHistory"; 
 import ParticlesBackground from '../components/particlesBackground';
 import { memo } from 'react';
+import Image from 'next/image';
 
 // memoize components that don't need to re-render
 const MemoizedParticlesBackground = memo(ParticlesBackground);
@@ -128,13 +129,20 @@ export default function Chatbot() {
       </div>
 
       <div className="relative z-10 flex h-128">
-        <aside className="w-1/4 bg-gray-100 p-4 shadow-md rounded-lg overflow-y-auto"> 
+        <aside className="w-1/4 bg-gray-100 p-4 shadow-md rounded-lg h-[500px] overflow-y-auto"> 
           <MemoizedChatHistory chatHistory={chatHistory} />
         </aside>
 
         <div className="flex-1 flex flex-col">
-          <header className="text-3xl font-bold mb-6 text-center text-blue-600 p-4">
-            AIDA: Artificial Intelligence Diagnostic Assistant
+          <header className="flex items-center justify-center text-3xl font-bold mb-6 text-blue-600 p-4 space-x-4">
+            <Image 
+              src="/stethoscope.png" 
+              alt="AIDA logo"
+              width={60} 
+              height={60} 
+              className="inline-block"
+            />
+            <span>AIDA: Artificial Intelligence Diagnostic Assistant</span>
           </header>
 
           <div className="flex flex-1 space-x-4 px-4">
@@ -143,7 +151,7 @@ export default function Chatbot() {
             </div>
 
             <div className="flex-1 flex flex-col">
-              <div className="bg-white rounded-lg shadow-md p-6 mb-4 flex-grow overflow-y-auto">
+              <div className="bg-white rounded-lg shadow-md p-6 mb-4 flex-grow h-[350px] overflow-y-auto">
                 {messages.map((message, index) => (
                   <div key={index} className={`mb-4 ${message.user ? 'text-right' : 'text-left'}`}>
                     <span className={`inline-block p-2 rounded-lg ${message.user ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-800'}`}>

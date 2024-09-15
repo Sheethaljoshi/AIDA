@@ -20,7 +20,6 @@ export default function VideoChat({ onAudioData }) {
           const ws = new WebSocket("ws://localhost:8000/ws")
           wsRef.current = ws
 
-
           // Set up MediaRecorder
           mediaRecorderRef.current = new MediaRecorder(stream)
           
