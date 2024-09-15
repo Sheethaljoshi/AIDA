@@ -4,13 +4,21 @@ export default function ChatHistory() {
   const [chatHistory, setChatHistory] = useState([])
 
   useEffect(() => {
-    // fetch from backend!
-    const mockHistory = [
-      { id: 1, date: '2024-03-15', summary: 'Discussed headache symptoms' },
-      { id: 2, date: '2024-03-10', summary: 'Follow-up on medication side effects' },
-    ]
-    setChatHistory(mockHistory)
-  }, [])
+    const fetchChatHistory = async () => {
+      try {
+        const response = await fetch('http://127.0.0.1:8000/api/chat_history?email=johndoe@gmail.com&first_name=John&last_name=Doe')
+        if (!response.ok) {
+          throw new Error('Failed to fetch chat history')
+        }
+        const data = await response.json()
+        setChatHistory(data)
+      } catch (error) {
+        console.error('Error fetching chat history:', error)
+      }
+    }
+  
+    fetchChatHistory()
+  }, [])  
 
   return (
     <div>

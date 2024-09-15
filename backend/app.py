@@ -13,10 +13,21 @@ from datetime import datetime
 import wav
 
 
+from typing import List
+from pydantic import BaseModel
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 scheduler = BackgroundScheduler()
 scheduler.start()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # MongoDB setup
 uri = "mongodb+srv://sh33thal24:7CGH0tmrDIsD9QrE@cluster0.klphh.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
@@ -199,7 +210,7 @@ async def insert_medical_history(
     return {"status": "Medical history inserted successfully"}
 
 @app.get("/api/chat_history")
-async def get_chat_history(email: str = "johndoe@gmail.com", first_name: str = "John", last_name: str = "Doe"):
+async def get_chat_history(email: str, first_name: str, last_name: str):
     user = collection.find_one({"email": email, "first_name": first_name, "last_name": last_name})
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
