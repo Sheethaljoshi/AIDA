@@ -3,10 +3,10 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 
 const medicalData = {
   firstName: "John",
-  lastName: "Doe",
+  lastName: "Joe",
   age: 44,
-  height: 65,
-  weight: 122,
+  height: 181,
+  weight: 154,
   sex: "Male",
   medicalHistory: [
     { disease: "Arthritis", severity: 4, probability: 70 },
@@ -21,13 +21,16 @@ const medicalData = {
 };
 
 export default function Results() {
-  const [data, setData] = useState([]);
+  const [sentimentData, setSentimentData] = useState([]);
 
   useEffect(() => {
-    setData([
-      { name: 'Arthritis', severity: 4, probability: 70 },
-      { name: 'Asthma', severity: 2, probability: 50 },
-      { name: 'Psoriasis', severity: 2, probability: 40 }
+    // simulated sentiment data for the graph
+    setSentimentData([
+      { name: 'Positive', frequency: 25 },
+      { name: 'Negative', frequency: 15 },
+      { name: 'Neutral', frequency: 20 },
+      { name: 'Surprised', frequency: 10 },
+      { name: 'Anxious', frequency: 30 }
     ]);
   }, []);
 
@@ -35,7 +38,7 @@ export default function Results() {
     return `
       Patient: ${medicalData.firstName} ${medicalData.lastName}
       Age: ${medicalData.age}
-      Height: ${medicalData.height} inches
+      Height: ${medicalData.height} cm
       Weight: ${medicalData.weight} lbs
       Sex: ${medicalData.sex}
 
@@ -81,17 +84,16 @@ export default function Results() {
         </div>
       </div>
 
-      {/* chart */}
-      <h2 className="text-2xl font-bold mb-4 text-gray-800 text-center">Condition Severity Chart</h2>
+      {/* sentiment chart */}
+      <h2 className="text-2xl font-bold mb-4 text-gray-800 text-center">Sentiment Analysis Chart</h2>
       <ResponsiveContainer width="100%" height={300}>
-        <BarChart data={data}>
+        <BarChart data={sentimentData}>
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="name" />
           <YAxis />
           <Tooltip />
           <Legend />
-          <Bar dataKey="severity" fill="#1D4ED8" />
-          <Bar dataKey="probability" fill="#82ca9d" />
+          <Bar dataKey="frequency" fill="#1D4ED8" />
         </BarChart>
       </ResponsiveContainer>
 
