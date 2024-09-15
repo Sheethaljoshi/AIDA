@@ -203,7 +203,6 @@ async def update_conversation_title(
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Failed to update the conversation title")
     
-    # Optionally, export and upload the vector store
     export_and_upload_to_vector_store()
 
     return {"status": "Conversation title updated successfully", "new_title": new_title}
@@ -325,27 +324,16 @@ async def insert_medical_history(
 
     return {"status": "Medical history inserted successfully"}
 
-@app.get("/api/chat_history")
-async def get_chat_history(email: str, first_name: str, last_name: str):
-    user = collection.find_one({"email": email, "first_name": first_name, "last_name": last_name})
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    
-    chat_history = user.get("past_convos", [])
-    return chat_history
 
-@app.post("/create_conversation/")
-async def create_conversation(
-    email: str = Form(...),
-    first_name: str = Form(...),
-    last_name: str = Form(...),
-    title: str = Form(...)
-):
+
+@app.get("/start-recording/")
+async def start_recording(background_tasks: BackgroundTasks, email: str, first_name: str, last_name: str):
     current_date = datetime.utcnow().strftime('%m/%d/%y')
+    unique_id = generate_unique_id()
 
     new_conversation = {
         "date": current_date,
-        "title": title,
+        "title": unique_id,
         "messages": [],
     }
 
@@ -356,17 +344,13 @@ async def create_conversation(
 
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="User not found")
-
-    return {"status": "Conversation created successfully"}
-
-@app.get("/start-recording/")
-async def start_recording(background_tasks: BackgroundTasks):
+    
     global recording
     recording = True
     background_tasks.add_task(poll_transcript)
 
     
-def poll_transcript():
+def poll_transcript(email: str, first_name: str, last_name: str):
     global recording
     global transcript
     recording = True
@@ -378,9 +362,44 @@ def poll_transcript():
             else:
                 break
         
-        # get answer
+        user = collection.find_one(
+        {"email": email, "first_name": first_name, "last_name": last_name},
+        {"past_convos": {"$slice": -1}}  # Get the last conversation
+    )
+
+    if not user or "past_convos" not in user or len(user["past_convos"]) == 0:
+        raise HTTPException(status_code=404, detail="No conversation found for the user")
+
+    # Retrieve the unique ID (title) from the most recent conversation
+    latest_conversation = user["past_convos"][0]
+    unique_id = latest_conversation["title"]
+
+    # Process the question and generate the answer
+    final_answer = return_answer(transcript)
+
+    # Update the latest conversation with the question and answer
+    result = collection.update_one(
+        {
+            "email": email,
+            "first_name": first_name,
+            "last_name": last_name,
+            "past_convos.title": unique_id  # Match using the unique ID (title)
+        },
+        {
+            "$push": {
+                "past_convos.$.messages": [
+                    {"role": "user", "content": transcript},
+                    {"role": "assistant", "content": final_answer}
+                ]
+            }
+        }
+    )
+
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    else:
+        export_and_upload_to_vector_store()
         
-        # ##########
         print(transcript)
         
         transcript = ""
@@ -402,9 +421,38 @@ async def test():
     
 
 @app.get("/stop-recording/")
-async def stop_recording():
+async def stop_recording(email: str, first_name: str, last_name: str):
     global recording
     recording = False
+    user = collection.find_one(
+        {"email": email, "first_name": first_name, "last_name": last_name},
+        {"past_convos": {"$slice": -1}}  # Get the last conversation
+    )
+
+    if not user or "past_convos" not in user or len(user["past_convos"]) == 0:
+        raise HTTPException(status_code=404, detail="No conversation found for the user")
+
+    latest_conversation = user["past_convos"][0]
+
+    new_title = return_title()
+
+    result = collection.update_one(
+        {
+            "email": email, 
+            "first_name": first_name, 
+            "last_name": last_name, 
+            "past_convos.title": latest_conversation["title"]
+        },
+        {
+            "$set": {"past_convos.$.title": new_title}
+        }
+    )
+
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Failed to update the conversation title")
+    
+    export_and_upload_to_vector_store()
+    
     print(recording)
 
 @app.get("/")
