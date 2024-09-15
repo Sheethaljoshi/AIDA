@@ -35,6 +35,7 @@ export default function VideoChat({ onAudioData }) {
   }, [onAudioData])
 
   const toggleRecording = () => {
+    fetch('http://127.0.0.1:8000/start-recording/')
     if (!isRecording) {
       mediaRecorderRef.current.start()
     } else {
@@ -60,6 +61,7 @@ export default function VideoChat({ onAudioData }) {
   }, [])
 
   const endSession = () => {
+    fetch('http://127.0.0.1:8000/stop-recording/')
     // stop the recording if still active
     if (isRecording) {
       mediaRecorderRef.current.stop()
