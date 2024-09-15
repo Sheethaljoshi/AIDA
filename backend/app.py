@@ -11,10 +11,6 @@ from io import BytesIO
 from dotenv import load_dotenv
 from datetime import datetime
 import wav
-
-
-from typing import List
-from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
@@ -254,8 +250,12 @@ def poll_transcript():
     recording = True
     while recording:
         global transcript
-        transcript = wav.record_audio_and_get_transcript()
-        print(recording)
+        last_ten = wav.record_audio_and_get_transcript()
+        if last_ten:
+            transcript += last_ten
+        else:
+            break
+        # print(recording)
 
 @app.get("/stop-recording/")
 async def stop_recording():
