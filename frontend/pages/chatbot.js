@@ -3,6 +3,7 @@ import VideoChat from "../components/VideoChat";
 import ChatHistory from "../components/ChatHistory"; 
 import ParticlesBackground from '../components/particlesBackground';
 import { memo } from 'react';
+import { handler } from './api/test';
 import Image from 'next/image';
 
 // memoize components that don't need to re-render
@@ -14,24 +15,30 @@ export default function Chatbot() {
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [chatHistory, setChatHistory] = useState([])
+  // const [updateChat, setUpdateChat] = useState('')
+  // const [latestUser, setLatestUser] = useState('')
+  // const [latestBot, setLatestBot] = useState('')
 
   // chat history on component mount
-  useEffect(() => {
-    fetchChatHistory()
-  }, [])
+  // useEffect(() => {
+  //   fetchChatHistory()
+  // }, [updateChat])
 
-  const fetchChatHistory = async () => {
-    try {
-      const response = await fetch('/api/chat_history') 
-      if (!response.ok) {
-        throw new Error('Failed to fetch chat history')
-      }
-      const data = await response.json()
-      setChatHistory(data)
-    } catch (error) {
-      console.error('Error fetching chat history:', error)
-    }
-  }
+  // const fetchChatHistory = (req) => {
+  //   // try {
+  //   //   const response = await fetch('/api/chat_history') 
+  //   //   if (!response.ok) {
+  //   //     throw new Error('Failed to fetch chat history')
+  //   //   }
+  //   //   const data = await response.json()
+  //   //   setChatHistory(data)
+  //   // } catch (error) {
+  //   //   console.error('Error fetching chat history:', error)
+  //   // }
+  //   // req
+  //   console.log(updateChat)
+  //   console.log("here!!!!!")
+  // }
 
   const handleSubmit = useCallback(async (e) => {
     e.preventDefault()
@@ -72,6 +79,27 @@ export default function Chatbot() {
       setMessages((prevMessages) => [...prevMessages, errorMessage])
     }
   }, [input])
+
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      const data = await fetch('http://127.0.0.1:8000/latest/')
+      let posts = await data.json()
+      // console.log(posts.latestUser)
+      // console.log(latestUser)
+      if (posts.newText === true)
+          console.log("true")
+      console.log(posts.newText)
+
+      if (posts.newText === true) {
+        // setLatestBot({text: posts.latestBot})
+        // setLatestUser({text: posts.latestUser})
+        setMessages((prevMessages) => [...prevMessages, { text: posts.latestUser, user: true }])
+        setMessages((prevMessages) => [...prevMessages, { text: posts.latestBot, user: false }])
+      }
+    }, 5000)
+    
+    return () => clearInterval(interval)
+  }, [])
   
   const handleAudioData = useCallback(async (audioBlob) => {
     const formData = new FormData()
@@ -147,7 +175,7 @@ export default function Chatbot() {
 
           <div className="flex flex-1 space-x-4 px-4">
             <div className="w-1/2">
-              <MemoizedVideoChat onAudioData={handleAudioData} />
+              <MemoizedVideoChat/>
             </div>
 
             <div className="flex-1 flex flex-col">

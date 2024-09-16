@@ -38,7 +38,10 @@ client = MongoClient(uri, server_api=ServerApi('1'))
 db = client["aida"]
 collection = db["users"]
 transcript = ""
+latestUser = ""
+latestBot = ""
 recording = True
+newText = False
 
 load_dotenv()
 
@@ -169,7 +172,11 @@ def return_title():
         print(answer)
         return answer
     
-    
+@app.post("/test/")
+async def test():
+    result = requests.get("http://localhost:3000/test")
+    print(result)
+        
 @app.post("/update_conversation_title/")
 async def update_conversation_title(
     email: str = Form(...),
@@ -303,55 +310,55 @@ async def create_conversation(
 
     return unique_id
 
-@app.post("/new-medical-history/")
-async def insert_medical_history(
-    email: str = Form(...),
-    first_name: str = Form(...),
-    last_name: str = Form(...),
-    disease: str = Form(...),
-    severity: int = Form(...),
-    probability: int = Form(...)
-):
-    medical_history_data = {
-        'disease': disease,
-        'severity': severity,
-        'probability': probability
-    }
+# @app.post("/new-medical-history/")
+# async def insert_medical_history(
+#     email: str = Form(...),
+#     first_name: str = Form(...),
+#     last_name: str = Form(...),
+#     disease: str = Form(...),
+#     severity: int = Form(...),
+#     probability: int = Form(...)
+# ):
+#     medical_history_data = {
+#         'disease': disease,
+#         'severity': severity,
+#         'probability': probability
+#     }
 
-    # find user by email, first name, last name, and push new medical history
-    result = collection.update_one(
-        {'email': email, 'first_name': first_name, 'last_name': last_name},
-        {'$push': {'medical_history': medical_history_data}}
-    )
+#     # find user by email, first name, last name, and push new medical history
+#     result = collection.update_one(
+#         {'email': email, 'first_name': first_name, 'last_name': last_name},
+#         {'$push': {'medical_history': medical_history_data}}
+#     )
 
-    export_and_upload_to_vector_store()
+#     export_and_upload_to_vector_store()
 
-    return {"status": "Medical history inserted successfully"}
+#     return {"status": "Medical history inserted successfully"}
 
 
 
 @app.get("/start-recording/")
 async def start_recording(background_tasks: BackgroundTasks, email: str, first_name: str, last_name: str):
-    current_date = datetime.utcnow().strftime('%m/%d/%y')
-    unique_id = generate_unique_id()
+    # current_date = datetime.utcnow().strftime('%m/%d/%y')
+    # unique_id = generate_unique_id()
 
-    new_conversation = {
-        "date": current_date,
-        "title": unique_id,
-        "messages": [],
-    }
+    # new_conversation = {
+    #     "date": current_date,
+    #     "title": unique_id,
+    #     "messages": [],
+    # }
 
-    result = collection.update_one(
-        {"email": email, "first_name": first_name, "last_name": last_name},
-        {"$push": {"past_convos": new_conversation}}
-    )
+    # result = collection.update_one(
+    #     {"email": email, "first_name": first_name, "last_name": last_name},
+    #     {"$push": {"past_convos": new_conversation}}
+    # )
 
-    if result.matched_count == 0:
-        raise HTTPException(status_code=404, detail="User not found")
+    # if result.matched_count == 0:
+    #     raise HTTPException(status_code=404, detail="User not found")
     
     global recording
     recording = True
-    background_tasks.add_task(poll_transcript(email, first_name, last_name))
+    background_tasks.add_task(poll_transcript, email, first_name, last_name)
 
     
 def poll_transcript(email: str, first_name: str, last_name: str):
@@ -366,44 +373,49 @@ def poll_transcript(email: str, first_name: str, last_name: str):
             else:
                 break
         
-        user = collection.find_one(
-            {"email": email, "first_name": first_name, "last_name": last_name},
-            {"past_convos": {"$slice": -1}}  # Get the last conversation
-        )
+        # user = collection.find_one(
+        #     {"email": email, "first_name": first_name, "last_name": last_name},
+        #     {"past_convos": {"$slice": -1}}  # Get the last conversation
+        # )
 
-        if not user or "past_convos" not in user or len(user["past_convos"]) == 0:
-            raise HTTPException(status_code=404, detail="No conversation found for the user")
+        # if not user or "past_convos" not in user or len(user["past_convos"]) == 0:
+        #     raise HTTPException(status_code=404, detail="No conversation found for the user")
 
-        # Retrieve the unique ID (title) from the most recent conversation
-        latest_conversation = user["past_convos"][0]
-        unique_id = latest_conversation["title"]
+        # # Retrieve the unique ID (title) from the most recent conversation
+        # latest_conversation = user["past_convos"][0]
+        # unique_id = latest_conversation["title"]
 
         # Process the question and generate the answer
         final_answer = return_answer(transcript)
         
 
         # Update the latest conversation with the question and answer
-        result = collection.update_one(
-            {
-                "email": email,
-                "first_name": first_name,
-                "last_name": last_name,
-                "past_convos.title": unique_id  # Match using the unique ID (title)
-            },
-            {
-                "$push": {
-                    "past_convos.$.messages": [
-                        {"role": "user", "content": transcript},
-                        {"role": "assistant", "content": final_answer}
-                    ]
-                }
-            }
-        )
+        # result = collection.update_one(
+        #     {
+        #         "email": email,
+        #         "first_name": first_name,
+        #         "last_name": last_name,
+        #         "past_convos.title": unique_id  # Match using the unique ID (title)
+        #     },
+        #     {
+        #         "$push": {
+        #             "past_convos.$.messages": [
+        #                 {"role": "user", "content": transcript},
+        #                 {"role": "assistant", "content": final_answer}
+        #             ]
+        #         }
+        #     }
+        # )
+        
+        global latestUser, latestBot, newText
+        latestUser = transcript
+        latestBot = final_answer
+        newText = True
 
-        if result.matched_count == 0:
-            raise HTTPException(status_code=404, detail="Conversation not found")
-        else:
-            export_and_upload_to_vector_store()
+        # if result.matched_count == 0:
+        #     raise HTTPException(status_code=404, detail="Conversation not found")
+        # else:
+        #     export_and_upload_to_vector_store()
         
         print(transcript)
         
@@ -420,7 +432,7 @@ def poll_transcript(email: str, first_name: str, last_name: str):
 sentiments = {'Anger': 0, 'Anxiety': 0, 'Distress': 0, 'Horror': 0, 'Pain': 0}
 sentCount = 0
 
-@app.websocket("/ws")
+# @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     global sentiments
     global sentCount
@@ -466,16 +478,23 @@ async def websocket_endpoint(websocket: WebSocket):
             if websocket.application_state == WebSocketState.CONNECTED:
                 await websocket.send_text(f"Error during processing{e}")
                 
-@app.get("/avgs")
-def getAvgs():
-    return sentiments
+# @app.get("/avgs")
+# def getAvgs():
+#     return sentiments
     
     
-@app.get("/test/")
-async def test():
-    res = requests.get('http://localhost:3000/test/')
-    print(res.text)
+# @app.get("/test/")
+# async def test():
+#     res = requests.get('http://localhost:3000/test/')
+#     print(res.text)
     
+    
+@app.get("/latest/")
+async def get_latest():
+    global latestUser, latestBot, newText
+    old = newText
+    newText = False
+    return {"latestUser": latestUser, "latestBot": latestBot, "newText": old}
 
 @app.get("/stop-recording/")
 async def stop_recording(email: str, first_name: str, last_name: str):
@@ -511,10 +530,6 @@ async def stop_recording(email: str, first_name: str, last_name: str):
     export_and_upload_to_vector_store()
     
     print(recording)
-
-@app.get("/")
-def root():
-    return {"message" : transcript}
 
 if __name__ == "__main__":
     import uvicorn

@@ -6,7 +6,7 @@ export default function Results() {
   const [sentimentData, setSentimentData] = useState([]);
 
   useEffect(() => {
-    getEmotionsAvgs()
+    // getEmotionsAvgs()
     // Retrieve the user profile from localStorage
     const storedUserData = localStorage.getItem('userProfile');
     if (storedUserData) {
@@ -14,13 +14,13 @@ export default function Results() {
     }
 
     // Simulate sentiment data for the graph
-    // setSentimentData([
-    //   { name: 'Positive', frequency: 25 },
-    //   { name: 'Negative', frequency: 15 },
-    //   { name: 'Neutral', frequency: 20 },
-    //   { name: 'Surprised', frequency: 10 },
-    //   { name: 'Anxious', frequency: 30 }
-    // ]);
+    setSentimentData([
+      { name: 'Positive', frequency: 13.78 },
+      { name: 'Negative', frequency: 21.36 },
+      { name: 'Neutral', frequency: 20 },
+      { name: 'Surprised', frequency: 10 },
+      { name: 'Anxious', frequency: 30 }
+    ]);
   }, []);
 
   const getEmotionsAvgs = () => {

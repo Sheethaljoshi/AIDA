@@ -28,7 +28,7 @@ def record_audio(duration, filename, samplerate=44100):
     print(f"Audio saved as {filename}")
 
 def record_audio_and_get_transcript():
-    duration = 10  # Duration in seconds
+    duration = 5  # Duration in seconds
     filename = 'output.wav'  # Output file name
     record_audio(duration, filename)
 

@@ -14,6 +14,6 @@ def get_transcript(filepath):
     model="whisper-1", 
     file=audio_file
   )
-  if len(transcription.text) < 15:
+  if len(transcription.text) < 10:
     return None
   return transcription.text

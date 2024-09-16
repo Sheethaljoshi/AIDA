@@ -1,7 +1,7 @@
 import { useRef, useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 
-export default function VideoChat({ onAudioData }) {
+export default function VideoChat() {
   const videoRef = useRef(null)
   const [isRecording, setIsRecording] = useState(false)
   const mediaRecorderRef = useRef(null)
@@ -32,10 +32,10 @@ export default function VideoChat({ onAudioData }) {
           console.error("Error accessing the camera and microphone:", error)
         })
     }
-  }, [onAudioData])
+  }, [])
 
   const toggleRecording = () => {
-    fetch('http://127.0.0.1:8000/start-recording/')
+    fetch(`http://127.0.0.1:8000/start-recording/?email=johndoe@gmail.com&first_name=John&last_name=Doe`)
     if (!isRecording) {
       mediaRecorderRef.current.start()
     } else {
@@ -55,7 +55,7 @@ export default function VideoChat({ onAudioData }) {
           }
         }, 'video/webm')
       }
-    }, 1000)
+    }, 2000)
     
     return () => clearInterval(interval)
   }, [])
