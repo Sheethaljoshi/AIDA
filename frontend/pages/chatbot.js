@@ -145,8 +145,8 @@ export default function Chatbot() {
       // refresh chat history after new message
       fetchChatHistory()
     } catch (error) {
-      // console.error('Error processing audio:', error)
-      // setMessages((prevMessages) => [...prevMessages, { text: 'Error processing audio', user: false }])
+      console.error('Error processing audio:', error)
+      setMessages((prevMessages) => [...prevMessages, { text: 'Error processing audio', user: false }])
     }
   }, [])
 
